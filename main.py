@@ -100,24 +100,32 @@ def dc(S):
     if len(S) == 1:
         return S
     else:
-        S.sort(key=lambda x: x[1])
-        print("S: ",S)
+        S.sort(key=lambda x: x[0])  
+        print("S: ", S)
 
         meio = len(S) // 2
         S1 = S[:meio]
-        S2 = S[meio:]
+        S2 = S[meio:]  
 
-        M1 = dc(S1)
-        M2 = dc(S2)
+        M1 = dc(S1) 
+        M2 = dc(S2)  
 
-        dA, tA = M1[-1]
-        dB, tB = M2[0]
+        M = combina(M1, M2)
+        return M
 
-        if (dA <= dB and tA <= tB) and (dA < dB or tA < tB):
-            # Remove o ponto dominado de M2
-            M2 = M2[1:]
+def combina(M1, M2):
+    M = M1.copy() 
+
+    for p in M2:
+        dominado = False
+        for q in M1:
+            if p[0] <= q[0] and p[1] <= q[1]: 
+                dominado = True
+                break
         
-        return M1+M2
+        if not dominado: 
+            M.append(p)
+    return M
 
 def open_arq(arq):
     with open(arq, 'r') as f:
@@ -176,9 +184,10 @@ def gerar_graficos_e_tabelas(tabelas, diretorio_saida):
     for instancia, dados in tabelas.items():
         solucoes_ordenadas = sorted(dados["solucoes_minimais"], key=lambda x: x[0])
         dR, tR = zip(*solucoes_ordenadas)
-        print(instancia,": ",solucoes_ordenadas)
         plt.figure(figsize=(10, 5))
         plt.plot(dR, tR, 'o-', label="Soluções Minimais")
+        plt.text(dR[0], tR[0], f"({dR[0]}, {tR[0]})", fontsize=10, ha='right')
+        plt.text(dR[-1], tR[-1], f"({dR[-1]}, {tR[-1]})", fontsize=10, ha='left')
         plt.xlabel("dR (Distância)")
         plt.ylabel("tR (Tempo)")
         plt.grid(True)
