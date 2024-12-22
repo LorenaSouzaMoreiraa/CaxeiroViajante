@@ -99,40 +99,25 @@ def gerar_conjunto_s(D, T, I):
 def dc(S):
     if len(S) == 1:
         return S
+    else:
+        S.sort(key=lambda x: x[1])
+        print("S: ",S)
 
-    S.sort(key=lambda x: x[1])
-    print("S: ",S)
+        meio = len(S) // 2
+        S1 = S[:meio]
+        S2 = S[meio:]
 
-    meio = len(S) // 2
-    S1 = S[:meio]
-    S2 = S[meio:]
+        M1 = dc(S1)
+        M2 = dc(S2)
 
-    M1 = dc(S1)
-    M2 = dc(S2)
-
-    M = []
-    i, j = 0, 0
-
-    while i<len(M1) and j < len(M2):
-        dA, tA = M1[i]
-        dB, tB = M2[j]
+        dA, tA = M1[-1]
+        dB, tB = M2[0]
 
         if (dA <= dB and tA <= tB) and (dA < dB or tA < tB):
-            j += 1
-        elif (dB <= dA and tB <= tA) and (dB < dA or tB < tA):
-            i += 1
-        else:
-            M.append(M1[i])
-            i += 1
-    while i < len(M1):
-        M.append(M1[i])
-        i += 1
-
-    while j < len(M2):
-        M.append(M2[j])
-        j += 1
-    print("M: ", M)
-    return M
+            # Remove o ponto dominado de M2
+            M2 = M2[1:]
+        
+        return M1+M2
 
 def open_arq(arq):
     with open(arq, 'r') as f:
