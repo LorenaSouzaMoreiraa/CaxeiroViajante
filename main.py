@@ -114,17 +114,19 @@ def dc(S):
         return M
 
 def combina(M1, M2):
-    M = M1.copy() 
+    M = (M1.copy() + M2.copy())
+    M.sort()
+    dominado = [True for _ in range(len(M))]
 
-    for p in M2:
-        dominado = False
-        for q in M1:
-            if p[0] <= q[0] and p[1] <= q[1]: 
-                dominado = True
-                break
-        
-        if not dominado: 
-            M.append(p)
+    d0,t0 = M[0]
+    for i in range(1,len(M)):
+        di,ti = M[i]
+        if (d0 < di) and (t0 > ti):
+            d0,t0 = di,ti
+        else:
+            dominado[i] = False
+
+    M = [m for i, m in enumerate(M) if dominado[i]]
     return M
 
 def open_arq(arq):
