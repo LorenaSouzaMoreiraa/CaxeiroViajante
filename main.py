@@ -91,7 +91,9 @@ def gerar_conjunto_s(D, T, I):
     for _ in range(2 * n):
         rota = random.sample(I, n)
         distancia = sum(D[rota[i]][rota[i + 1]] for i in range(n - 1))
+        distancia += D[rota[-1]][rota[0]]  # Fechar o ciclo
         tempo = sum(T[rota[i]][rota[i + 1]] for i in range(n - 1))
+        tempo += T[rota[-1]][rota[0]]  # Fechar o ciclo
         S.append((distancia, tempo))
 
     return S
@@ -156,13 +158,45 @@ def processar_instancia(nome_arquivo):
     S = gerar_conjunto_s(D, T, I)
     
     solucoes_minimais = dc(S)
-    
+    scatterplot_conjunto_s(S,solucoes_minimais, nome_arquivo)
     tempo_cpu = (time.time() - inicio_tempo) * 1000  # Convertendo para ms
     
     return {
         "solucoes_minimais": solucoes_minimais,
         "tempo_cpu": tempo_cpu
     }
+
+def scatterplot_conjunto_s(S, M, nome_arquivo):
+    os.makedirs("testes", exist_ok=True)
+    # Separar os valores de dR (distância) e tR (tempo) para o conjunto S
+    dR_S, tR_S = zip(*S)
+
+    # Separar os valores de dR e tR para as soluções minimais M
+    dR_M, tR_M = zip(*sorted(M, key=lambda x: x[0]))  # Ordenar M por dR para o lineplot
+
+    # Criar o scatterplot do conjunto S
+    plt.figure(figsize=(10, 6))
+    plt.scatter(dR_S, tR_S, color='blue', label="Conjunto S (dR, tR)", alpha=0.6)
+
+    # Adicionar o lineplot das soluções minimais
+    plt.plot(dR_M, tR_M, color='red', linestyle='-', marker='o', label="Soluções Minimais (M)")
+
+    # Adicionar destaques para o ponto de menor distância e menor tempo
+    plt.scatter(dR_M[0], tR_M[0], color='green', s=100, label="Menor Distância")
+    plt.scatter(dR_M[-1], tR_M[-1], color='purple', s=100, label="Menor Tempo")
+
+    # Adicionar rótulos e título
+    plt.xlabel("dR (Distância)", fontsize=12)
+    plt.ylabel("tR (Tempo)", fontsize=12)
+    plt.title("Conjunto S com Soluções Minimais", fontsize=14)
+    plt.grid(True)
+
+    # Adicionar legenda
+    plt.legend()
+
+    caminho_arquivo = os.path.join("testes", f"conjunto_s_{nome_arquivo}.png")
+    plt.savefig(caminho_arquivo)
+    plt.close()
 
 def gerar_graficos_e_tabelas(tabelas, diretorio_saida):
     os.makedirs(diretorio_saida, exist_ok=True)
@@ -183,17 +217,37 @@ def gerar_graficos_e_tabelas(tabelas, diretorio_saida):
             solucoes_ordenadas = sorted(dados["solucoes_minimais"], key=lambda x: x[0])
             writer.writerow([instancia] + [f"({dr}, {tr})" for dr, tr in solucoes_ordenadas])
 
-    for instancia, dados in tabelas.items():
+    for numero_figura, (instancia, dados) in enumerate(tabelas.items(), start=1):
         solucoes_ordenadas = sorted(dados["solucoes_minimais"], key=lambda x: x[0])
         dR, tR = zip(*solucoes_ordenadas)
+        
+        # Identificar os índices dos pontos de mínimo e máximo
+        min_idx = tR.index(min(tR))
+        max_idx = tR.index(max(tR))
+        
         plt.figure(figsize=(10, 5))
-        plt.plot(dR, tR, 'o-', label="Soluções Minimais")
-        plt.text(dR[0], tR[0], f"({dR[0]}, {tR[0]})", fontsize=10, ha='right')
-        plt.text(dR[-1], tR[-1], f"({dR[-1]}, {tR[-1]})", fontsize=10, ha='left')
+        
+        # Plotar a curva principal
+        plt.plot(dR, tR, 'o-', label="Soluções Minimais", color="blue")
+        
+        # Destacar o ponto de máximo
+        plt.scatter(dR[max_idx], tR[max_idx], color='red', label="Máximo", zorder=5)
+        plt.text(dR[max_idx], tR[max_idx], f"({dR[max_idx]}, {tR[max_idx]})", color="red", fontsize=9)
+        
+        # Destacar o ponto de mínimo
+        plt.scatter(dR[min_idx], tR[min_idx], color='green', label="Mínimo", zorder=5)
+        plt.text(dR[min_idx], tR[min_idx], f"({dR[min_idx]}, {tR[min_idx]})", color="green", fontsize=9)
+    
+        # Configurar o título e os rótulos dos eixos
+        plt.title(f"Fig{numero_figura}. {instancia}")
         plt.xlabel("dR (Distância)")
         plt.ylabel("tR (Tempo)")
+        
+        # Adicionar grade e legenda
         plt.grid(True)
         plt.legend()
+        
+        # Salvar o gráfico no diretório especificado
         plt.savefig(os.path.join(diretorio_saida, f"grafico_{instancia}.png"))
         plt.close()
 
